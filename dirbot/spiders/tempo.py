@@ -48,7 +48,6 @@ class TempoSpider(Spider):
         self.config = Configuration()
         self.config.language = 'id'
         self.config.fetch_images = False
-        self.calendar = buildTempoCalendar()
 
     def parse(self, response):
 
@@ -62,8 +61,9 @@ class TempoSpider(Spider):
             yield scrapy.Request(url, callback=self.parse_article)
 
     def parse_article(self, response):
-        article = Article(response.url, self.config)
-        article.html = response.body
+        # utilize newspaper for article parsing
+        article = Article(url=response.url, config=self.config)
+        article.set_html(response.body)
 
         article.parse()
         item = Art()
