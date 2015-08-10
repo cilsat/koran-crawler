@@ -65,12 +65,14 @@ class RepublikaSpider(Spider):
         # parse subsequent index depths recursively; stops when no article links are found
         if len(urls) > 0:
             new_url = response.url
+            print '1' + new_url
             # hardcoded link format for republika
-            try:
-                new_url.replace(new_url[44:],str(int(url[44:]) + 40))
-            except:
-                new_url = response.urljoin("/" + str(40*self.index))
+            if len(new_url.split('/')) > 7:
+                new_url = new_url.replace(new_url[44:],str(int(new_url[44:]) + 40))
+            else:
+                new_url += '/' + str(40)
 
+            print '2' + new_url
             yield scrapy.Request(new_url, callback=self.parse)
 
             # pool article downloads and offload parsing to newspaper
