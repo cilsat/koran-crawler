@@ -41,7 +41,7 @@ class TempoSpider(Spider):
 
     name = "tempo"
     allowed_domains = ["tempo.co"]
-    start_urls = ["http://www.tempo.co/indeks/2013/" + date for date in buildTempoCalendar()]
+    start_urls = ["http://www.tempo.co/indeks/2003/" + date for date in buildTempoCalendar()]
 
     def __init__(self):
         # newspaper config
@@ -55,10 +55,12 @@ class TempoSpider(Spider):
 
         # selects all article urls on page. may need to refine
         urls = sel.xpath('//ul/li/div/h3/a/@href').extract()
+        print str(len(urls)) + " " + response.url
 
         # pool article downloads and offload parsing to newspaper
-        for url in urls:
-            yield scrapy.Request(url, callback=self.parse_article)
+        if len(urls) > 1:
+            for url in urls:
+                yield scrapy.Request(url, callback=self.parse_article)
 
     def parse_article(self, response):
         # utilize newspaper for article parsing

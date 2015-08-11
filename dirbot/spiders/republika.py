@@ -10,7 +10,7 @@ from newspaper.source import Configuration
 def buildRepublikaCalendar():
     # calendar subroutine to populate start_urls with dates 
     calendar = []
-    tahun = range(2010,2011)
+    tahun = range(2015,2016)
     for t in tahun:
         tstring = str(t) + "/"
         bulan = range(1,13)

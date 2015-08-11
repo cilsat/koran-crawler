@@ -6,7 +6,7 @@ class FilterWordsPipeline(object):
     description"""
 
     # put all words in lowercase
-    words_to_filter = ['politics', 'religion']
+    words_to_filter = []
 
     def process_item(self, item, spider):
         for word in self.words_to_filter:
@@ -14,3 +14,4 @@ class FilterWordsPipeline(object):
                 raise DropItem("Contains forbidden word: %s" % word)
         else:
             return item
+
