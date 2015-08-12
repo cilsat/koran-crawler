@@ -40,11 +40,12 @@ class TempoSpider(Spider):
 
         # selects all article urls on page. may need to refine. tempo doesn't employ index pagination
         urls = sel.xpath('//ul/li/div/h3/a/@href').extract()
+        print str(len(urls)) + " " + response.url
 
         # pool article downloads and offload parsing to newspaper
-        for url in urls:
-            print url
-            yield scrapy.Request(response.urljoin(url), callback=self.parse_article)
+        if len(urls) > 1:
+            for url in urls:
+                yield scrapy.Request(url, callback=self.parse_article)
 
     def parse_article(self, response):
         # utilize newspaper for article parsing

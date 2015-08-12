@@ -7,12 +7,12 @@ from dirbot.items import Art
 from newspaper.article import Article
 from newspaper.source import Configuration
 
-def buildRepublikaCalendar():
+def buildKompasCalendar():
     # calendar subroutine to populate start_urls with dates 
     calendar = []
-    tahun = range(2015,2016)
+    tahun = range(2013,2014)
     for t in tahun:
-        tstring = str(t) + "/"
+        tstring = str(t)
         bulan = range(1,13)
         for b in bulan:
             tanggal = []
@@ -27,9 +27,9 @@ def buildRepublikaCalendar():
             
             bstring = ""
             if b < 10:
-                bstring = "0" + str(b) + "/"
+                bstring = "0" + str(b)
             else:
-                bstring = str(b) + "/"
+                bstring = str(b)
 
             for t in tanggal:
                 dstring = ""
@@ -38,15 +38,16 @@ def buildRepublikaCalendar():
                 else:
                     dstring = str(t)
 
-                calendar.append(tstring + bstring + dstring)
+                calendar.append("&tanggal=" + dstring + "&bulan=" + bstring + "&tahun=" + tstring)
 
     return calendar
 
-class RepublikaSpider(Spider):
+class KompasSpider(Spider):
 
-    name = "republika"
-    allowed_domains = ["republika.co.id"]
-    start_urls = ["http://www.republika.co.id/index/" + date for date in buildRepublikaCalendar()]
+    name = "kompas"
+    allowed_domains = ["kompas.com"]
+    categories = ["nasional", "regional", "megapolitan", "internasional", "olahraga", "sains", "edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
+    start_urls = ["http://indeks.kompas.com/indeks/index/" + category + "?" + date for date in buildKompasCalendar() for category in categories]
 
     def __init__(self):
         # newspaper config
@@ -59,18 +60,19 @@ class RepublikaSpider(Spider):
 
         sel = Selector(response)
 
-        # selects all article urls on page. may need to refine
-        urls = sel.xpath('//h4/a/@href').extract()
+        # selects all article urls in kompas index page. may need to refine
+        urls = sel.xpath('//div/ul/li/div/h3/a/@href').extract()
 
         # parse subsequent index depths recursively; stops when no article links are found
         if len(urls) > 0:
             new_url = response.url
             print '1' + new_url
-            # hardcoded link format for republika
-            if len(new_url.split('/')) > 7:
-                new_url = new_url.replace(new_url[44:],str(int(new_url[44:]) + 40))
+            # hardcoded link format for kompas
+            if len(new_url.split('&')) < 2:
+                s = new_url.find('?p=')
+                new_url = new_url.replace(new_url[s+3:], str(int(new_url[s+3:])+1))
             else:
-                new_url += '/' + str(40)
+                new_url = new_url.split('?')[0] + '?p=2'
 
             print '2' + new_url
             yield scrapy.Request(new_url, callback=self.parse)
