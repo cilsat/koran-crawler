@@ -9,6 +9,8 @@ class Website(Item):
 
 class Art(Item):
     title = Field()
-    authors = Field()
     url = Field()
     text = Field()
+
+class Sentences(Item):
+    sentences = Field()
