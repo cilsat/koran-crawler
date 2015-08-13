@@ -45,6 +45,7 @@ class TempoSpider(Spider):
         # pool article downloads and offload parsing to newspaper
         if len(urls) > 1:
             for url in urls:
+                print url
                 yield scrapy.Request(url, callback=self.parse_article)
 
     def parse_article(self, response):
@@ -57,6 +58,7 @@ class TempoSpider(Spider):
         
         item = Art()
         item['title'] = article.title
+        item['authors'] = article.authors
         item['url'] = article.url
         item['text'] = article.text
         yield item

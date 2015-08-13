@@ -11,6 +11,7 @@ class Art(Item):
     title = Field()
     url = Field()
     text = Field()
+    authors = Field()
 
 class Sentences(Item):
     sentences = Field()

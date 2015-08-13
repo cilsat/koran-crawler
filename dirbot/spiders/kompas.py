@@ -7,54 +7,25 @@ from dirbot.items import Art
 from newspaper.article import Article
 from newspaper.source import Configuration
 
-def buildKompasCalendar():
-    # calendar subroutine to populate start_urls with dates 
-    calendar = []
-    tahun = range(2013,2014)
-    for t in tahun:
-        tstring = str(t)
-        bulan = range(1,13)
-        for b in bulan:
-            tanggal = []
-            if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
-                tanggal = range(1,32)
-            elif b == 4 or b == 6 or b == 9 or b == 11:
-                tanggal = range(1,31)
-            elif (t+2) % 4 == 0:
-                tanggal = range(1,30)
-            else:
-                tanggal = range(1,29)
-            
-            bstring = ""
-            if b < 10:
-                bstring = "0" + str(b)
-            else:
-                bstring = str(b)
-
-            for t in tanggal:
-                dstring = ""
-                if t < 10:
-                    dstring = "0" + str(t)
-                else:
-                    dstring = str(t)
-
-                calendar.append("&tanggal=" + dstring + "&bulan=" + bstring + "&tahun=" + tstring)
-
-    return calendar
 
 class KompasSpider(Spider):
 
     name = "kompas"
     allowed_domains = ["kompas.com"]
-    categories = ["nasional", "regional", "megapolitan", "internasional", "olahraga", "sains", "edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
-    start_urls = ["http://indeks.kompas.com/indeks/index/" + category + "?" + date for date in buildKompasCalendar() for category in categories]
 
-    def __init__(self):
+    def __init__(self, year=None):
         # newspaper config
         self.config = Configuration()
         self.config.language = 'id'
         self.config.fetch_images = False
-        self.index = 0
+        self.year = year
+
+    def start_requests(self):
+        categories = ["nasional", "regional", "megapolitan", "internasional", "olahraga", "sains", "edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
+
+        for date in self.buildKompasCalendar():
+            for category in categories:
+                yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category + "?" + date, self.parse)        
 
     def parse(self, response):
 
@@ -94,3 +65,36 @@ class KompasSpider(Spider):
         item['text'] = article.text
         yield item
 
+    def buildKompasCalendar(self):
+        # calendar subroutine to populate start_urls with dates 
+        calendar = []
+        tstring = str(self.year)
+        bulan = range(1,13)
+
+        for b in bulan:
+            tanggal = []
+            if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
+                tanggal = range(1,32)
+            elif b == 4 or b == 6 or b == 9 or b == 11:
+                tanggal = range(1,31)
+            elif (int(self.year)+2) % 4 == 0:
+                tanggal = range(1,30)
+            else:
+                tanggal = range(1,29)
+            
+            bstring = ""
+            if b < 10:
+                bstring = "0" + str(b)
+            else:
+                bstring = str(b)
+
+            for t in tanggal:
+                dstring = ""
+                if t < 10:
+                    dstring = "0" + str(t)
+                else:
+                    dstring = str(t)
+
+                calendar.append("&tanggal=" + dstring + "&bulan=" + bstring + "&tahun=" + tstring)
+
+        return calendar
