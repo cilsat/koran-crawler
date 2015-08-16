@@ -49,19 +49,22 @@ class TempoSpider(Spider):
                 yield scrapy.Request(url, callback=self.parse_article)
 
     def parse_article(self, response):
-        # utilize newspaper for article parsing
-        article = Article(url=response.url, config=self.config)
-        article.set_html(response.body)
-        article.parse()
+        if len(response.body) > 0:
+            # utilize newspaper for article parsing
+            article = Article(url=response.url, config=self.config)
+            article.set_html(response.body)
+            article.parse()
 
-        #self.sentences.append(nlp.split_sentences(article.text))
-        
-        item = Art()
-        item['title'] = article.title
-        item['authors'] = article.authors
-        item['url'] = article.url
-        item['text'] = article.text
-        yield item
+            #self.sentences.append(nlp.split_sentences(article.text))
+            
+            item = Art()
+            item['title'] = article.title
+            item['authors'] = article.authors
+            item['url'] = article.url
+            item['text'] = article.text
+            yield item
+        else:
+            print response.url + ' DEAD LINK'
 
     def buildTempoCalendar(self):
         # calendar subroutine to populate start_urls with dates 
