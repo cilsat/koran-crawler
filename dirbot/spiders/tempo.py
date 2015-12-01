@@ -14,26 +14,39 @@ class TempoSpider(Spider):
     name = "tempo"
     allowed_domains = ["tempo.co"]
 
-    def __init__(self, year=None):
+    def __init__(self, date=None):
         # newspaper config
         self.config = Configuration()
         self.config.language = 'id'
         self.config.fetch_images = False
+        self.year = None
+        self.date = None
 
         # input argument to define year
-        self.year = year
+        # if year is unspecified get the current date
+        if date:
+            print "salah"
+            if len(date) == 4:
+                self.year = date
+            elif len(date) == 6:
+                self.date = date
 
         # container for all sentences
         self.sentences = []
 
         self.curpath = os.path.abspath(__file__)
         self.datpath = os.path.join(self.curpath, '/output/' + self.name + '/')
-        self.datfile = os.path.join(self.datpath, self.name + '-' + self.year + '.txt')
 
     def start_requests(self):
-        # yield requests for all days in the given year
-        for date in self.buildTempoCalendar():
-            yield scrapy.Request("http://www.tempo.co/indeks/" + date, self.parse)
+        # yield requests for all days in the given year if "year" argument is given
+        # else yield requests for current date
+        if self.year or self.date:
+            for date in self.generateIndex():
+                yield scrapy.Request("http://www.tempo.co/indeks/" + date, self.parse)
+
+        else:
+            print "ini loh"
+            yield scrapy.Request("http://www.tempo.co/indeks/", self.parse)
 
     def parse(self, response):
         sel = Selector(response)
@@ -66,36 +79,43 @@ class TempoSpider(Spider):
         else:
             print response.url + ' DEAD LINK'
 
-    def buildTempoCalendar(self):
+    def generateIndex(self):
         # calendar subroutine to populate start_urls with dates 
         calendar = []
-        bulan = range(1,13)
-        tstring = self.year + "/"
+        if self.year:
+            bulan = range(1,13)
+            tstring = self.year + "/"
 
-        for b in bulan:
-            tanggal = []
-            if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
-                tanggal = range(1,32)
-            elif b == 4 or b == 6 or b == 9 or b == 11:
-                tanggal = range(1,31)
-            elif b == 2 and (int(self.year)+2) % 4 == 0:
-                tanggal = range(1,30) 
-            elif b == 2 :
-                tanggal = range(1,29)
-            
-            bstring = ""
-            if b < 10:
-                bstring = "0" + str(b) + "/"
-            else:
-                bstring = str(b) + "/"
-
-            for t in tanggal:
-                dstring = ""
-                if t < 10:
-                    dstring = "0" + str(t) + "/"
+            for b in bulan:
+                tanggal = []
+                if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
+                    tanggal = range(1,32)
+                elif b == 4 or b == 6 or b == 9 or b == 11:
+                    tanggal = range(1,31)
+                elif b == 2 and (int(self.year)+2) % 4 == 0:
+                    tanggal = range(1,30) 
+                elif b == 2 :
+                    tanggal = range(1,29)
+                
+                bstring = ""
+                if b < 10:
+                    bstring = "0" + str(b) + "/"
                 else:
-                    dstring = str(t) + "/"
+                    bstring = str(b) + "/"
 
-                calendar.append(tstring + bstring + dstring)
+                for t in tanggal:
+                    dstring = ""
+                    if t < 10:
+                        dstring = "0" + str(t) + "/"
+                    else:
+                        dstring = str(t) + "/"
+
+                    calendar.append(tstring + bstring + dstring)
+
+        elif self.date:
+            year = self.date[-4:]
+            month = self.date[2:4]
+            day = self.date[:2]
+            calendar = year + "/" + month + "/" + day + "/"
 
         return calendar
