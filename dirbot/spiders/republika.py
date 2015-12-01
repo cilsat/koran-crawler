@@ -13,16 +13,28 @@ class RepublikaSpider(Spider):
     name = "republika"
     allowed_domains = ["republika.co.id"]
 
-    def __init__(self, year=None):
+    def __init__(self, date=None):
         # newspaper config
         self.config = Configuration()
         self.config.language = 'id'
         self.config.fetch_images = False
-        self.year = year
+        self.year = None
+        self.date = None
+
+        print "Date: " + str(date)
+
+        if date:
+            if len(date) == 4:
+                self.year = date
+            if len(date) == 6:
+                self.date = date
 
     def start_requests(self):
-        for date in self.buildRepublikaCalendar():
-            yield scrapy.Request("http://www.republika.co.id/index/" + date)
+        if self.year or self.date:
+            for date in self.generateIndex():
+                yield scrapy.Request("http://www.republika.co.id/index/" + date, self.parse)
+        else:
+            yield scrapy.Request("http://www.republika.co.id/index", self.parse)
 
     def parse(self, response):
 
@@ -30,6 +42,8 @@ class RepublikaSpider(Spider):
 
         # selects all article urls on page. may need to refine
         urls = sel.xpath('//h4/a/@href').extract()
+
+        print urls
 
         # parse subsequent index depths recursively; stops when no article links are found
         if len(urls) > 0:
@@ -61,36 +75,43 @@ class RepublikaSpider(Spider):
         item['text'] = article.text
         yield item
 
-    def buildRepublikaCalendar(self):
+    def generateIndex(self):
         # calendar subroutine to populate start_urls with dates 
         calendar = []
-        tstring = self.year
-        bulan = range(1,13)
+        if self.year:
+            tstring = self.year
+            bulan = range(1,13)
 
-        for b in bulan:
-            tanggal = []
-            if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
-                tanggal = range(1,32)
-            elif b == 4 or b == 6 or b == 9 or b == 11:
-                tanggal = range(1,31)
-            elif (int(self.year)+2) % 4 == 0:
-                tanggal = range(1,30)
-            else:
-                tanggal = range(1,29)
-            
-            bstring = ""
-            if b < 10:
-                bstring = "0" + str(b) + "/"
-            else:
-                bstring = str(b) + "/"
-
-            for t in tanggal:
-                dstring = ""
-                if t < 10:
-                    dstring = "0" + str(t)
+            for b in bulan:
+                tanggal = []
+                if b == 1 or b == 3 or b == 5 or b == 7 or b == 8 or b == 10 or b == 12:
+                    tanggal = range(1,32)
+                elif b == 4 or b == 6 or b == 9 or b == 11:
+                    tanggal = range(1,31)
+                elif (int(self.year)+2) % 4 == 0:
+                    tanggal = range(1,30)
                 else:
-                    dstring = str(t)
+                    tanggal = range(1,29)
+                
+                bstring = ""
+                if b < 10:
+                    bstring = "0" + str(b) + "/"
+                else:
+                    bstring = str(b) + "/"
 
-                calendar.append(tstring + bstring + dstring)
+                for t in tanggal:
+                    dstring = ""
+                    if t < 10:
+                        dstring = "0" + str(t)
+                    else:
+                        dstring = str(t)
+
+                    calendar.append(tstring + bstring + dstring)
+
+        elif self.date:
+            year = self.date[-4:]
+            month = self.date[2:4]
+            day = self.date[:2]
+            calendar = year + "/" + month + "/" + day
 
         return calendar
