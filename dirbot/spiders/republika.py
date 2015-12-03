@@ -6,6 +6,7 @@ from dirbot.items import Art
 
 from newspaper.article import Article
 from newspaper.source import Configuration
+from newspaper import nlp
 
 
 class RepublikaSpider(Spider):
@@ -26,12 +27,13 @@ class RepublikaSpider(Spider):
         if date:
             if len(date) == 4:
                 self.year = date
-            if len(date) == 6:
+            if len(date) == 8:
                 self.date = date
 
     def start_requests(self):
         if self.year or self.date:
             for date in self.generateIndex():
+                #print date
                 yield scrapy.Request("http://www.republika.co.id/index/" + date, self.parse)
         else:
             yield scrapy.Request("http://www.republika.co.id/index", self.parse)
@@ -41,7 +43,7 @@ class RepublikaSpider(Spider):
         sel = Selector(response)
 
         # selects all article urls on page. may need to refine
-        urls = sel.xpath('//h4/a/@href').extract()
+        urls = sel.xpath('//*/div[@class="wp-indeks"]/a/@href').extract()
 
         print urls
 
@@ -72,7 +74,7 @@ class RepublikaSpider(Spider):
         item['title'] = article.title
         item['authors'] = article.authors
         item['url'] = article.url
-        item['text'] = article.text
+        item['text'] = '\n'.join(nlp.split_sentences(article.text))
         yield item
 
     def generateIndex(self):
@@ -112,6 +114,6 @@ class RepublikaSpider(Spider):
             year = self.date[-4:]
             month = self.date[2:4]
             day = self.date[:2]
-            calendar = year + "/" + month + "/" + day
+            calendar = [year + "/" + month + "/" + day]
 
         return calendar
