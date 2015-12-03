@@ -1,3 +1,4 @@
+
 import scrapy
 from scrapy.spiders import Spider
 from scrapy.selector import Selector
@@ -72,7 +73,6 @@ class RepublikaSpider(Spider):
         article.parse()
         item = Art()
         item['title'] = article.title
-        item['authors'] = article.authors
         item['url'] = article.url
         item['text'] = '\n'.join(nlp.split_sentences(article.text))
         yield item
@@ -94,7 +94,7 @@ class RepublikaSpider(Spider):
                     tanggal = range(1,30)
                 else:
                     tanggal = range(1,29)
-                
+
                 bstring = ""
                 if b < 10:
                     bstring = "0" + str(b) + "/"

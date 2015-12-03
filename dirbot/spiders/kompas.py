@@ -97,7 +97,6 @@ class KompasSpider(Spider):
         article.parse()
         item = Art()
         item['title'] = article.title
-        item['authors'] = article.authors
         item['url'] = article.url
         item['text'] = article.text
         yield item
