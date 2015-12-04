@@ -38,15 +38,14 @@ class KompasSpider(Spider):
             import time
             self.today = time.strftime("%d %m %Y")
 
-        self.dates = self.generateIndex()
-        self.ndate = 0
-
     def start_requests(self):
-        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[self.ndate] + "&pos=indeks", self.parse)        
+        for i, date in enumerate(self.generateIndex()):
+            yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + date + "&pos=indeks", meta={'cookiejar': i}, callback=self.parse_index)
+
     """
     This function needs to be tailored to the structure of the index of the site you want to crawl.
     """
-    def parse(self, response):
+    def parse_index(self, response):
 
         sel = Selector(response)
 
@@ -67,14 +66,11 @@ class KompasSpider(Spider):
                 new_url = 'http://indeks.kompas.com/?p=2'
 
             # recursively scrape subsequent index pages
-            yield scrapy.Request(new_url, callback=self.parse)
+            yield scrapy.Request(new_url, meta = {'cookiejar': response.meta['cookiejar']}, callback=self.parse_index)
 
             # pool article downloads and offload parsing to newspaper
             for url in urls:
                 yield scrapy.Request(url, callback=self.parse_article)
-
-        self.ndate += 1
-        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[self.ndate] + "&pos=indeks", self.parse)        
 
     def parse_article(self, response):
         # utilize newspaper for article parsing
