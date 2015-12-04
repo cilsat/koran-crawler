@@ -6,6 +6,7 @@ from dirbot.items import Art
 
 from newspaper.article import Article
 from newspaper.source import Configuration
+from newspaper import nlp
 
 
 class KompasSpider(Spider):
@@ -26,68 +27,54 @@ class KompasSpider(Spider):
         self.config.fetch_images = False
         self.year = None
         self.date = None
+        self.today = None
 
         if date:
             if len(date) == 4:
                 self.year = date
-            elif len(date) == 6:
+            elif len(date) == 8:
                 self.date = date
+        else:
+            import time
+            self.today = time.strftime("%d %m %Y")
+
+        self.dates = self.generateIndex()
+        self.ndate = 0
 
     def start_requests(self):
-        categories = ["news/nasional", "news/regional", "news/megapolitan", "news/internasional", "news/olahraga", "news/sains", "news/edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
-
-        if self.year or self.date:
-            for date in self.generateIndex():
-                for category in categories:
-                    yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category + "?" + date, self.parse)        
-        else:
-            for category in categories:
-                yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category, self.parse)        
-
+        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[ndate] + "&pos=indeks", self.parse)        
+    """
+    This function needs to be tailored to the structure of the index of the site you want to crawl.
+    """
     def parse(self, response):
 
         sel = Selector(response)
 
-        # selects all article urls in kompas index page. may need to refine
+        # this is the xpath function to obtain the url links to articles on an index page
         urls = sel.xpath('//div/ul/li/div/h3/a/@href').extract()
 
-        # parse subsequent index depths recursively; stops when no article links are found
-        if len(urls) > 0:
+        # if currrent index page has links to articles: stop condition
+        if urls:
             new_url = response.url
-            # if we need to specify a date
-            if self.year or self.date:
-                print 'old_url: ' + new_url
 
-                # hardcoded link format for kompas
-                # basically it adds a "p=n" to the end of the index link 
-                # where n is the recursion depth
-                if len(new_url.split('&')) < 2:
-                    s = new_url.find('?p=')
-                    new_url = new_url.replace(new_url[s+3:], str(int(new_url[s+3:])+1))
-                else:
-                    new_url = new_url.split('?')[0] + '?p=2'
-
-                print 'new_url: ' + new_url
-                yield scrapy.Request(new_url, callback=self.parse)
-            # if we're using the current date
+            # recursively request next index page by adding '1' to current page
+            split = new_url.split('=')
+            if len(split) == 2:
+                next_page = str(int(split[-1])+ 1)
+                new_url = split[0] + '=' + next_page
+            # start condition
             else:
-                print 'old_url: ' + new_url
+                new_url = 'http://indeks.kompas.com/?p=2'
 
-                # hardcoded link format for kompas
-                # basically it adds a "p=n" to the end of the index link 
-                # where n is the recursion depth
-                if len(new_url.split('?')) >= 2:
-                    s = new_url.find('?p=')
-                    new_url = new_url.replace(new_url[s+3:], str(int(new_url[s+3:])+1))
-                else:
-                    new_url += "?p=2"
-
-                print 'new_url: ' + new_url
-                yield scrapy.Request(new_url, callback=self.parse)
+            # recursively scrape subsequent index pages
+            yield scrapy.Request(new_url, callback=self.parse)
 
             # pool article downloads and offload parsing to newspaper
             for url in urls:
                 yield scrapy.Request(url, callback=self.parse_article)
+
+        self.ndate += 1
+        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[ndate] + "&pos=indeks", self.parse)        
 
     def parse_article(self, response):
         # utilize newspaper for article parsing
@@ -98,14 +85,14 @@ class KompasSpider(Spider):
         item = Art()
         item['title'] = article.title
         item['url'] = article.url
-        item['text'] = article.text
+        item['text'] = '\n'.join(nlp.split_sentences(article.text.replace('\n', ' ')))
         yield item
 
     def generateIndex(self):
         # calendar subroutine to populate start_urls with dates 
         calendar = []
         if self.year:
-            tstring = str(self.year)
+            year = str(self.year)
             bulan = range(1,13)
 
             for b in bulan:
@@ -119,25 +106,31 @@ class KompasSpider(Spider):
                 else:
                     tanggal = range(1,29)
                 
-                bstring = ""
+                month = ""
                 if b < 10:
-                    bstring = "0" + str(b)
+                    month = "0" + str(b)
                 else:
-                    bstring = str(b)
+                    month = str(b)
 
                 for t in tanggal:
-                    dstring = ""
+                    day = ""
                     if t < 10:
-                        dstring = "0" + str(t)
+                        day = "0" + str(t)
                     else:
-                        dstring = str(t)
+                        day = str(t)
 
-                    calendar.append("&tanggal=" + dstring + "&bulan=" + bstring + "&tahun=" + tstring)
+                    calendar.append("&tanggal=" + day + "&bulan=" + month + "&tahun=" + year)
         
         elif self.date:
             year = self.date[-4:]
             month = self.date[2:4]
             day = self.date[:2]
-            calendar = "&tanggal=" + day + "&bulan=" + month + "&tahun=" + year 
+            calendar = ["&tanggal=" + day + "&bulan=" + month + "&tahun=" + year]
+
+        elif self.today:
+            day, month, year = self.today.split()
+            calendar = ["&tanggal=" + day + "&bulan=" + month + "&tahun=" + year]
+
+        print calendar
 
         return calendar
