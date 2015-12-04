@@ -42,7 +42,7 @@ class KompasSpider(Spider):
         self.ndate = 0
 
     def start_requests(self):
-        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[ndate] + "&pos=indeks", self.parse)        
+        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[self.ndate] + "&pos=indeks", self.parse)        
     """
     This function needs to be tailored to the structure of the index of the site you want to crawl.
     """
@@ -74,7 +74,7 @@ class KompasSpider(Spider):
                 yield scrapy.Request(url, callback=self.parse_article)
 
         self.ndate += 1
-        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[ndate] + "&pos=indeks", self.parse)        
+        yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + self.dates[self.ndate] + "&pos=indeks", self.parse)        
 
     def parse_article(self, response):
         # utilize newspaper for article parsing
