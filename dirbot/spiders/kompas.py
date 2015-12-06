@@ -38,9 +38,18 @@ class KompasSpider(Spider):
             import time
             self.today = time.strftime("%d %m %Y")
 
+    """
+    We request all category index pages
+    If cookies are used we also pass a unique cookie name for that category
+    and date.
+    Subsequent page depths will use this cookie
+    """
     def start_requests(self):
-        for i, date in enumerate(self.generateIndex()):
-            yield scrapy.Request("http://indeks.kompas.com/indeks/index/?" + date + "&pos=indeks", meta={'cookiejar': i}, callback=self.parse_index)
+        categories = ["news/nasional", "news/regional", "news/megapolitan", "news/internasional", "news/olahraga", "news/sains", "news/edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
+
+        for (day, month, year) in self.generateIndex():
+            for category in categories:
+                yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category + "?&tanggal=" + day + "&bulan=" + month + "&tahun=" + year + "&pos=indeks", meta={'cookiejar': category+day+month+year}, callback=self.parse_index)
 
     """
     This function needs to be tailored to the structure of the index of the site you want to crawl.
@@ -66,6 +75,8 @@ class KompasSpider(Spider):
                 new_url = 'http://indeks.kompas.com/?p=2'
 
             # recursively scrape subsequent index pages
+            print "URL Cookie: " + str(response.meta['cookiejar'])
+            print "URL: " + new_url
             yield scrapy.Request(new_url, meta = {'cookiejar': response.meta['cookiejar']}, callback=self.parse_index)
 
             # pool article downloads and offload parsing to newspaper
@@ -115,17 +126,17 @@ class KompasSpider(Spider):
                     else:
                         day = str(t)
 
-                    calendar.append("&tanggal=" + day + "&bulan=" + month + "&tahun=" + year)
+                    calendar.append([day, month, year])
         
         elif self.date:
             year = self.date[-4:]
             month = self.date[2:4]
             day = self.date[:2]
-            calendar = ["&tanggal=" + day + "&bulan=" + month + "&tahun=" + year]
+            calendar = [day, month, year]
 
         elif self.today:
             day, month, year = self.today.split()
-            calendar = ["&tanggal=" + day + "&bulan=" + month + "&tahun=" + year]
+            calendar = [day, month, year]
 
         print calendar
 
