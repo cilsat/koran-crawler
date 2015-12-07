@@ -47,9 +47,10 @@ class KompasSpider(Spider):
     def start_requests(self):
         categories = ["news/nasional", "news/regional", "news/megapolitan", "news/internasional", "news/olahraga", "news/sains", "news/edukasi", "ekonomi", "bola", "tekno", "entertainment", "otomotif", "health", "female", "properti", "travel"]
 
-        for (day, month, year) in self.generateIndex():
+        for date in self.generateIndex():
+            day, month, year = date
             for category in categories:
-                yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category + "?&tanggal=" + day + "&bulan=" + month + "&tahun=" + year + "&pos=indeks", meta={'cookiejar': category+day+month+year}, callback=self.parse_index)
+                yield scrapy.Request("http://indeks.kompas.com/indeks/index/" + category + "?&tanggal=" + day + "&bulan=" + month + "&tahun=" + year + "&pos=indeks", meta={'cookiejar': category+'-'+day+month+year}, callback=self.parse_index)
 
     """
     This function needs to be tailored to the structure of the index of the site you want to crawl.
@@ -72,7 +73,8 @@ class KompasSpider(Spider):
                 new_url = split[0] + '=' + next_page
             # start condition
             else:
-                new_url = 'http://indeks.kompas.com/?p=2'
+                category = response.meta['cookiejar'].split('-')[0]
+                new_url = "http://indeks.kompas.com/indeks/index/" + category + "?p=2"
 
             # recursively scrape subsequent index pages
             print "URL Cookie: " + str(response.meta['cookiejar'])
@@ -126,17 +128,17 @@ class KompasSpider(Spider):
                     else:
                         day = str(t)
 
-                    calendar.append([day, month, year])
+                    calendar += [day, month, year]
         
         elif self.date:
             year = self.date[-4:]
             month = self.date[2:4]
             day = self.date[:2]
-            calendar = [day, month, year]
+            calendar = [[day, month, year]]
 
         elif self.today:
             day, month, year = self.today.split()
-            calendar = [day, month, year]
+            calendar = [[day, month, year]]
 
         print calendar
 
