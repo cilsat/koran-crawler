@@ -40,8 +40,7 @@ class KompasSpider(Spider):
 
     """
     We request all category index pages
-    If cookies are used we also pass a unique cookie name for that category
-    and date.
+    If cookies are used we also pass a unique cookie name for that category and date.
     Subsequent page depths will use this cookie
     """
     def start_requests(self):
@@ -128,7 +127,7 @@ class KompasSpider(Spider):
                     else:
                         day = str(t)
 
-                    calendar += [day, month, year]
+                    calendar += [[day, month, year]]
         
         elif self.date:
             year = self.date[-4:]
