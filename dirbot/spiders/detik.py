@@ -9,10 +9,11 @@ from newspaper.article import Article
 from newspaper.source import Configuration
 #from newspaper import nlp
 
-class TempoSpider(Spider):
+class DetikSpider(Spider):
 
-    name = "tempo"
-    allowed_domains = ["tempo.co"]
+    name = "detik"
+    allowed_domains = ["detik.com"]
+    start_urls = ["http://news.detik.com/indeks"]
 
     def __init__(self, date=None):
         # newspaper config
@@ -41,7 +42,7 @@ class TempoSpider(Spider):
         # else yield requests for current date
         if self.year or self.date:
             for date in self.generateIndex():
-                yield scrapy.Request("http://www.tempo.co/indeks/" + date, self.parse)
+                yield scrapy.Request("http://news.detik.com/indeks/" + date, self.parse)
 
         else:
             print "ini loh"

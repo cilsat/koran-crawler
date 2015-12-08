@@ -10,7 +10,7 @@ from newspaper.source import Configuration
 from newspaper import nlp
 
 
-class metroSpider(Spider):
+class MetroSpider(Spider):
 
     name = "metro"
     allowed_domains = ["metrotvnews.com"]
@@ -102,9 +102,9 @@ class metroSpider(Spider):
 
                 bstring = ""
                 if b < 10:
-                    bstring = "0" + str(b) + "/"
+                    bstring = "0" + str(b)
                 else:
-                    bstring = str(b) + "/"
+                    bstring = str(b)
 
                 for t in tanggal:
                     dstring = ""
@@ -113,7 +113,7 @@ class metroSpider(Spider):
                     else:
                         dstring = str(t)
 
-                    calendar.append(tstring + bstring + dstring + "/")
+                    calendar.append(tstring + '/' + bstring + '/' + dstring + "/")
 
         elif self.date:
             year = self.date[-4:]
