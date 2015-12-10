@@ -3,6 +3,7 @@ import scrapy
 from scrapy.spiders import Spider
 from scrapy.selector import Selector
 from scrapy.item import Item, Field
+from scrapy.http import FormRequest
 from dirbot.items import Art
 
 from newspaper.article import Article
@@ -69,7 +70,7 @@ class DetikSpider(Spider):
             article.parse()
 
             #self.sentences.append(nlp.split_sentences(article.text))
-            
+
             item = Art()
             item['title'] = article.title
             item['url'] = article.url
@@ -79,7 +80,7 @@ class DetikSpider(Spider):
             print response.url + ' DEAD LINK'
 
     def generateIndex(self):
-        # calendar subroutine to populate start_urls with dates 
+        # calendar subroutine to populate start_urls with dates
         calendar = []
         if self.year:
             bulan = range(1,13)
@@ -92,10 +93,10 @@ class DetikSpider(Spider):
                 elif b == 4 or b == 6 or b == 9 or b == 11:
                     tanggal = range(1,31)
                 elif b == 2 and (int(self.year)+2) % 4 == 0:
-                    tanggal = range(1,30) 
+                    tanggal = range(1,30)
                 elif b == 2 :
                     tanggal = range(1,29)
-                
+
                 bstring = ""
                 if b < 10:
                     bstring = "0" + str(b) + "/"

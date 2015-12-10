@@ -24,6 +24,7 @@ class KompasSpider(Spider):
         # newspaper config
         self.config = Configuration()
         self.config.language = 'id'
+        self.memoize_articles = False
         self.config.fetch_images = False
         self.year = None
         self.date = None
