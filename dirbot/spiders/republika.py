@@ -82,7 +82,7 @@ class RepublikaSpider(Spider):
         # calendar subroutine to populate start_urls with dates 
         calendar = []
         if self.year:
-            tstring = self.year
+            tstring = str(self.year) + '/'
             bulan = range(1,13)
 
             for b in bulan:
