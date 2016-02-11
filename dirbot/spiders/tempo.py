@@ -7,7 +7,7 @@ from dirbot.items import Art
 
 from newspaper.article import Article
 from newspaper.source import Configuration
-#from newspaper import nlp
+from newspaper import nlp
 
 class TempoSpider(Spider):
 
@@ -73,7 +73,7 @@ class TempoSpider(Spider):
             item = Art()
             item['title'] = article.title
             item['url'] = article.url
-            item['text'] = article.text
+            item['text'] = '\n'.join(nlp.split_sentences(article.text.replace('\n', ' ')))
             yield item
         else:
             print response.url + ' DEAD LINK'

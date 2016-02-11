@@ -75,7 +75,7 @@ class RepublikaSpider(Spider):
         item = Art()
         item['title'] = article.title
         item['url'] = article.url
-        item['text'] = '\n'.join(nlp.split_sentences(article.text))
+        item['text'] = '\n'.join(nlp.split_sentences(article.text.replace('\n', ' ')))
         yield item
 
     def generateIndex(self):
